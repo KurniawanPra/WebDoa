@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daftar Doa Lengkap</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+    }
+    .doa-item {
+      background: #fff;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    .doa-item h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      color: #007BFF;
+    }
+    .ayat {
+      font-size: 24px;
+      font-family: "Scheherazade", serif, "Amiri", serif;
+      direction: rtl;
+      margin-bottom: 6px;
+      color: #2c3e50;
+    }
+    .latin {
+      font-style: italic;
+      margin-bottom: 6px;
+      color: #555;
+    }
+    .artinya {
+      color: #444;
+    }
+    .loading {
+      text-align: center;
+      font-size: 18px;
+      margin-top: 50px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>Daftar Doa Lengkap</h1>
+  <div id="container">
+    <p class="loading">Memuat data doa...</p>
+  </div>
+
+  <script>
+    async function fetchDoa() {
+      const url = encodeURIComponent('https://doa-doa-api-ahmadramadhan.fly.dev/api');
+      const proxyUrl = `https://api.allorigins.win/get?url=${url}`;
+      const container = document.getElementById('container');
+
+      try {
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const result = await response.json();
+        const data = JSON.parse(result.contents);
+
+        container.innerHTML = ''; // kosongkan loading text
+
+        data.forEach(doa => {
+          const div = document.createElement('div');
+          div.className = 'doa-item';
+
+          div.innerHTML = `
+            <h2>${doa.doa}</h2>
+            <div class="ayat">${doa.ayat}</div>
+            <div class="latin">${doa.latin}</div>
+            <div class="artinya">${doa.artinya}</div>
+          `;
+
+          container.appendChild(div);
+        });
+      } catch (error) {
+        container.innerHTML = `<p style="color:red; text-align:center;">Error memuat data: ${error.message}</p>`;
+        console.error('Fetch error:', error);
+      }
+    }
+
+    fetchDoa();
+  </script>
+</body>
+</html>
