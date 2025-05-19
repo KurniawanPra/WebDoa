@@ -14,6 +14,18 @@
     h1 {
       text-align: center;
     }
+    .search-box {
+      max-width: 400px;
+      margin: 0 auto 20px;
+      display: flex;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
     .doa-item {
       background: #fff;
       border-radius: 8px;
@@ -47,15 +59,41 @@
       margin-top: 50px;
       color: #666;
     }
+    .pagination {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .pagination button {
+      padding: 8px 12px;
+      margin: 2px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+    }
+    .pagination button.active {
+      background-color: #0056b3;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <h1>Daftar Doa Lengkap</h1>
+  <div class="search-box">
+    <input type="text" id="search" placeholder="Cari doa...">
+  </div>
   <div id="container">
     <p class="loading">Memuat data doa...</p>
   </div>
+  <div class="pagination" id="pagination"></div>
 
   <script>
+    let allDoa = [];
+    let filteredDoa = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
     async function fetchDoa() {
       const url = encodeURIComponent('https://doa-doa-api-ahmadramadhan.fly.dev/api');
       const proxyUrl = `https://api.allorigins.win/get?url=${url}`;
@@ -68,26 +106,71 @@
         const result = await response.json();
         const data = JSON.parse(result.contents);
 
-        container.innerHTML = ''; // kosongkan loading text
-
-        data.forEach(doa => {
-          const div = document.createElement('div');
-          div.className = 'doa-item';
-
-          div.innerHTML = `
-            <h2>${doa.doa}</h2>
-            <div class="ayat">${doa.ayat}</div>
-            <div class="latin">${doa.latin}</div>
-            <div class="artinya">${doa.artinya}</div>
-          `;
-
-          container.appendChild(div);
-        });
+        allDoa = data;
+        filteredDoa = data;
+        renderDoa();
+        renderPagination();
       } catch (error) {
         container.innerHTML = `<p style="color:red; text-align:center;">Error memuat data: ${error.message}</p>`;
         console.error('Fetch error:', error);
       }
     }
+
+    function renderDoa() {
+      const container = document.getElementById('container');
+      container.innerHTML = '';
+
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pageItems = filteredDoa.slice(start, end);
+
+      if (pageItems.length === 0) {
+        container.innerHTML = `<p style="text-align:center;">Tidak ditemukan.</p>`;
+        return;
+      }
+
+      pageItems.forEach(doa => {
+        const div = document.createElement('div');
+        div.className = 'doa-item';
+        div.innerHTML = `
+          <h2>${doa.doa}</h2>
+          <div class="ayat">${doa.ayat}</div>
+          <div class="latin">${doa.latin}</div>
+          <div class="artinya">${doa.artinya}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function renderPagination() {
+      const totalPages = Math.ceil(filteredDoa.length / itemsPerPage);
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === currentPage) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+          currentPage = i;
+          renderDoa();
+          renderPagination();
+        });
+        pagination.appendChild(btn);
+      }
+    }
+
+    document.getElementById('search').addEventListener('input', (e) => {
+      const keyword = e.target.value.toLowerCase();
+      filteredDoa = allDoa.filter(d => 
+        d.doa.toLowerCase().includes(keyword) || 
+        d.latin.toLowerCase().includes(keyword) || 
+        d.artinya.toLowerCase().includes(keyword)
+      );
+      currentPage = 1;
+      renderDoa();
+      renderPagination();
+    });
 
     fetchDoa();
   </script>
